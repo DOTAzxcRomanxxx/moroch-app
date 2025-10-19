@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moroch Crypto App</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #8A2BE2, #4B0082);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .balance-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .balance-amount {
+            font-size: 32px;
+            font-weight: bold;
+            margin: 10px 0;
+            color: #00FF88;
+        }
+        
+        .bet-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .bet-button {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .bet-button.up {
+            background: #00FF88;
+            color: #000;
+        }
+        
+        .bet-button.down {
+            background: #FF4444;
+            color: #fff;
+        }
+        
+        .bet-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+        }
+        
+        .bet-amount {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .amount-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .amount-btn {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        
+        .amount-btn.active {
+            background: #8A2BE2;
+            font-weight: bold;
+        }
+        
+        .result {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            text-align: center;
+            display: none;
+        }
+        
+        .result.win {
+            background: rgba(0, 255, 136, 0.2);
+            border: 1px solid #00FF88;
+        }
+        
+        .result.lose {
+            background: rgba(255, 68, 68, 0.2);
+            border: 1px solid #FF4444;
+        }
+        
+        .history {
+            margin-top: 20px;
+        }
+        
+        .history-item {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .history-item.win {
+            border-left: 4px solid #00FF88;
+        }
+        
+        .history-item.lose {
+            border-left: 4px solid #FF4444;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            display: none;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid #8A2BE2;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌌 Moroch Crypto</h1>
+            <p>Торгуй с умом, зарабатывай с Moroch!</p>
+        </div>
+        
+        <div class="balance-card">
+            <div>Твой баланс:</div>
+            <div class="balance-amount" id="balance">50 MOROCH</div>
+            <div>≈ $500.00</div>
+        </div>
+        
+        <div class="bet-amount">
+            <div>Сумма ставки:</div>
+            <div class="amount-buttons">
+                <button class="amount-btn active" onclick="setAmount(5)">5 MOROCH</button>
+                <button class="amount-btn" onclick="setAmount(10)">10 MOROCH</button>
+                <button class="amount-btn" onclick="setAmount(25)">25 MOROCH</button>
+            </div>
+        </div>
+        
+        <div class="bet-buttons">
+            <button class="bet-button up" onclick="placeBet('up')">
+                🟢 ВВЕРХ<br>
+                <small>x2 выигрыш</small>
+            </button>
+            <button class="bet-button down" onclick="placeBet('down')">
+                🔴 ВНИЗ<br>
+                <small>x2 выигрыш</small>
+            </button>
+        </div>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <div>Делаем ставку...</div>
+        </div>
+        
+        <div class="result" id="result">
+            <div id="resultText"></div>
+            <div id="resultAmount"></div>
+        </div>
+        
+        <div class="history">
+            <h3>История ставок</h3>
+            <div id="historyList">
+                <!-- История будет добавляться здесь -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let tg = window.Telegram.WebApp;
+        let currentAmount = 5;
+        let userBalance = 50;
+        
+        tg.expand();
+        tg.ready();
+        
+        function setAmount(amount) {
+            currentAmount = amount;
+            document.querySelectorAll('.amount-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+        
+        function placeBet(direction) {
+            if (userBalance < currentAmount) {
+                showResult('error', 'Недостаточно средств!');
+                return;
+            }
+            
+            document.getElementById('loading').style.display = 'block';
+            
+            const data = {
+                action: 'place_bet',
+                direction: direction,
+                amount: currentAmount
+            };
+            
+            tg.sendData(JSON.stringify(data));
+            
+            setTimeout(() => {
+                document.getElementById('loading').style.display = 'none';
+                simulateResult(direction);
+            }, 2000);
+        }
+        
+        function simulateResult(direction) {
+            const isWin = Math.random() > 0.5;
+            const winAmount = isWin ? currentAmount : -currentAmount;
+            const newBalance = userBalance + winAmount;
+            
+            userBalance = newBalance;
+            document.getElementById('balance').textContent = newBalance + ' MOROCH';
+            
+            if (isWin) {
+                showResult('win', '🎉 ПОБЕДА!', `+${currentAmount} MOROCH`);
+                addToHistory('win', direction, currentAmount);
+            } else {
+                showResult('lose', '❌ ПРОИГРЫШ', `-${currentAmount} MOROCH`);
+                addToHistory('lose', direction, currentAmount);
+            }
+        }
+        
+        function showResult(type, text, amount) {
+            const result = document.getElementById('result');
+            const resultText = document.getElementById('resultText');
+            const resultAmount = document.getElementById('resultAmount');
+            
+            result.className = 'result ' + type;
+            resultText.textContent = text;
+            resultAmount.textContent = amount || '';
+            result.style.display = 'block';
+            
+            setTimeout(() => {
+                result.style.display = 'none';
+            }, 5000);
+        }
+        
+        function addToHistory(result, direction, amount) {
+            const historyList = document.getElementById('historyList');
+            const historyItem = document.createElement('div');
+            historyItem.className = 'history-item ' + result;
+            
+            const directionText = direction === 'up' ? '🟢 ВВЕРХ' : '🔴 ВНИЗ';
+            const resultText = result === 'win' ? 'ПОБЕДА' : 'ПРОИГРЫШ';
+            const amountText = result === 'win' ? `+${amount}` : `-${amount}`;
+            
+            historyItem.innerHTML = `
+                <div>
+                    <strong>${directionText}</strong><br>
+                    <small>${new Date().toLocaleTimeString()}</small>
+                </div>
+                <div>
+                    <strong>${amountText} MOROCH</strong><br>
+                    <small>${resultText}</small>
+                </div>
+            `;
+            
+            historyList.insertBefore(historyItem, historyList.firstChild);
+            
+            if (historyList.children.length > 5) {
+                historyList.removeChild(historyList.lastChild);
+            }
+        }
+        
+        tg.MainButton.setText('Обновить баланс');
+        tg.MainButton.show();
+        tg.MainButton.onClick(() => {
+            userBalance = 50;
+            document.getElementById('balance').textContent = userBalance + ' MOROCH';
+            document.getElementById('historyList').innerHTML = '';
+            tg.showPopup({
+                title: 'Баланс обновлен',
+                message: 'Твой баланс восстановлен до 50 MOROCH!'
+            });
+        });
+    </script>
+</body>
+</html>
